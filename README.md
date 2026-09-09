@@ -4,6 +4,8 @@
 
 > 适用场景：选型阶段快速估算力 / 数据门槛、对照安全风险清单、产出汇报材料。
 
+**在线试用**：<https://liuchangng.github.io/ai-model-select/>（GitHub Pages，自动部署 master 分支）
+
 ## 功能特性
 
 - **三场景切换**：推理 / 微调 / 预训练，不同场景输出不同的算力口径
