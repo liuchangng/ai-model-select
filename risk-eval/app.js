@@ -195,6 +195,9 @@ if (typeof document !== 'undefined') { (function () {
       { id: 'ngt',  label: 'NGT 生成 Token 数', type: 'number' },
       { id: 'H',    label: 'H 硬件每秒推理次数（可选）', type: 'number' },
       { id: 'I',    label: 'I 单次推理平均耗时 s（可选）', type: 'number' },
+      { id: 'nUsers', label: 'n 活跃用户数（A.4 平均并发用，可选）', type: 'number' },
+      { id: 'sessLen', label: 'L 会话平均时长 s（A.4 用，可选）', type: 'number' },
+      { id: 'period', label: 'T 考察时间段 s（A.4 用，可选）', type: 'number' },
       { id: 'L',    label: '层数 L（KV Cache 估算用，可选）', type: 'number' },
       { id: 'h',    label: '隐藏维度 h（KV Cache 估算用，可选）', type: 'number' },
       { id: 'seq',  label: '序列长度（KV Cache 估算用，可选）', type: 'number' },
@@ -323,11 +326,17 @@ if (typeof document !== 'undefined') { (function () {
   }
 
   /* ---------- 资源计算 ---------- */
-  function computeResources(inp, gaps, standard, empirical) {
+  function computeResources(inp, gaps, standard, empirical, opts) {
+    opts = opts || {};
     // 权重显存（A.1）：全场景通用
     var vram = Calc.calcVRAM(inp.params, inp.quant);
     if (vram.ok) {
-      standard.push(kvRow('模型权重显存（' + inp.quant + ' bit）', vram.value + ' GB', 'A', 'A.1', vram.formula));
+      // MoE 口径说明：显存按总参数（所有专家需常驻显存），算力按激活参数（R6：口径须写明）
+      var moeNote = (state.model && state.model.active_b)
+        ? '；MoE 模型：显存按总参数 ' + inp.params + 'B 计（所有专家需常驻显存，路由动态无法预知激活），' +
+          '算力/吞吐按激活参数 ' + state.model.active_b + 'B 计'
+        : '';
+      standard.push(kvRow('模型权重显存（' + inp.quant + ' bit）', vram.value + ' GB', 'A', 'A.1', vram.formula + moeNote));
     } else {
       gaps.push('模型权重显存：' + vram.error);
     }
@@ -335,7 +344,7 @@ if (typeof document !== 'undefined') { (function () {
     // 显存需求基准值：用于硬件匹配（取权重显存，微调场景下若表 A.2 更大则取表 A.2）
     var vramBasis = vram.ok ? vram.value : null;
 
-    if (state.scene === 'finetune') {
+    if (state.scene === 'finetune' && !opts.skipFinetune) {
       var ft = Calc.lookupFinetune(inp.params, D.tableA2);
       if (ft.ok) {
         standard.push(kvRow('LoRA 微调最低显存', ft.vram_g + ' GB', 'A', '表 A.2',
@@ -389,7 +398,14 @@ if (typeof document !== 'undefined') { (function () {
         if (b2.ok) standard.push(kvRow('基础并发量 B（按 A.2）', b2.value, 'A', 'A.2', b2.formula));
         else gaps.push('并发量（A.2）：' + b2.error);
       }
-      if (!tps && !H) gaps.push('并发量：未填写 TPS/TTFT/TPOT/NGT 或 H/I，无法估算');
+      // A.4 平均并发数 C = n × L / T（REQ-007：三公式须均可独立使用）
+      var nU = sp('nUsers'), sL = sp('sessLen'), pT = sp('period');
+      if (nU && sL && pT) {
+        var c = Calc.calcAvgConcurrency(nU, sL, pT);
+        if (c.ok) standard.push(kvRow('平均并发数 C（按 A.4）', c.value, 'A', 'A.4', c.formula));
+        else gaps.push('平均并发数（A.4）：' + c.error);
+      }
+      if (!tps && !H && !nU) gaps.push('并发量：未填写 TPS/TTFT/TPOT/NGT、H/I 或 n/L/T 任一组合，无法估算');
     }
 
     // 硬件匹配（C 级）
@@ -535,8 +551,14 @@ if (typeof document !== 'undefined') { (function () {
         box.innerHTML = '<p class="hint">尚未评分，拖动滑块开始评分。</p>';
       } else {
         var score = Math.round(sum / wsum * 100) / 100;
+        // 反方陈述加固：总分是「主观评分 × 自建权重」，保留两位小数会传递虚假精度，
+        // 必须紧跟不可比/不可验收警示，否则用户会拿它跨模型比大小或当验收依据
         box.innerHTML = '<div class="risk-item"><div class="risk-head"><span class="risk-title">加权总分</span>' + badge('C') +
           '</div><div><strong>' + score + ' / 5</strong>（已评维度权重合计 ' + wsum + '%）</div>' +
+          '<p class="hint" style="margin:8px 0 0;color:var(--danger)">' +
+          '<strong>不可跨模型比较、不可作为验收依据。</strong>' +
+          '分子为你的主观评分，分母为已评维度权重合计——两个模型若评分维度不同，分数无可比性；' +
+          '权重取自本地自建文档，非标准原文。</p>' +
           (missing.length ? '<p style="margin:8px 0 0">未评分维度：' + esc(missing.join('、')) + '</p>' : '') + '</div>';
       }
     }
@@ -570,8 +592,13 @@ if (typeof document !== 'undefined') { (function () {
     var gaps = [], standard = [], empirical = [];
 
     // 闭源 + 微调场景：判定不适用（契约 Edge）
+    // 修正：此前整段替换为告警，连与微调无关的 A.1 权重显存也一并吞掉（R19：决定须可看出）
     if (state.scene === 'finetune' && state.model && state.model.oss === false) {
-      el('sec-resource').innerHTML = '<div class="alert alert-warn">所选模型为闭源 API，通常不支持微调，此场景不适用，不输出微调配置。</div>';
+      computeResources(inp, gaps, standard, empirical, { skipFinetune: true });
+      el('sec-resource').innerHTML = '<h3>资源需求</h3>' +
+        '<div class="alert alert-warn">所选模型为闭源 API，通常不支持微调，' +
+        '<strong>表 A.2 微调配置不适用，已省略</strong>；以下保留与微调无关的 A.1 权重显存项。</div>' +
+        (standard.length ? renderRows(standard) : '<p class="hint">无可输出的标准依据项。</p>');
     } else {
       computeResources(inp, gaps, standard, empirical);
       el('sec-resource').innerHTML = '<h3>资源需求</h3>' + (standard.length ? renderRows(standard) : '<p class="hint">无可输出的标准依据项。</p>');
