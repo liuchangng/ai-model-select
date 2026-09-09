@@ -27,6 +27,18 @@
 
 直接双击打开 `risk-eval/index.html`（推荐 Chrome / Edge）。
 
+## 页面示例
+
+以下为示例模型 **Qwen2.5-7B** 在「推理 / 8-bit / 私有化部署 / 内部业务数据 / 启用 Agent」场景下的评估截图：
+
+**评估页面（已填写参数）**
+
+![评估页面](docs/images/page.png)
+
+**生成的评估报告**
+
+![评估报告](docs/images/report.png)
+
 ## 目录结构
 
 ```
