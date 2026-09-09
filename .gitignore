@@ -1,0 +1,15 @@
+# === spec-superflow-enhanced 生成文件（重装可恢复，不纳入版本控制）===
+/AGENTS.md
+/.agents/
+/plugin.json
+/knowledge.md
+/.githooks/
+/.joycode/
+/.opencode/
+/.hermes/
+/.cursor/
+/.freebuff/
+/.workbuddy/
+/.claude/
+/_output/
+# === end spec-superflow-enhanced ===

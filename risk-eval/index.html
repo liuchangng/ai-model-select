@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大模型选型与风险评估 — 依据 GB/Z 201—2026</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="site-header">
+    <h1>大模型选型与风险评估</h1>
+    <p class="subtitle">依据 GB/Z 201—2026 附录 A · OWASP LLM Top 10 2026 · 《AI 安全治理框架》2.0</p>
+    <p class="notice">
+      <strong>声明：</strong>本页结果为<strong>量级估算</strong>。GB/Z 201—2026 附录 A 为资料性附录，计算结果非承诺值；
+      数据核实日期 2026-09-09。带 <span class="badge badge-c">C</span> 标记的内容为工程经验或自建方法，非标准依据。
+    </p>
+  </header>
+
+  <section class="card" id="scene-section">
+    <h2>1. 选择场景</h2>
+    <div class="segmented" role="radiogroup" aria-label="评估场景">
+      <button type="button" class="seg-btn is-active" data-scene="infer" role="radio" aria-checked="true">推理</button>
+      <button type="button" class="seg-btn" data-scene="finetune" role="radio" aria-checked="false">微调</button>
+      <button type="button" class="seg-btn" data-scene="pretrain" role="radio" aria-checked="false">预训练</button>
+    </div>
+    <p class="hint" id="scene-hint"></p>
+  </section>
+
+  <section class="card" id="input-section">
+    <h2>2. 填写参数</h2>
+    <div class="grid-2">
+      <div class="col-main">
+        <div class="field">
+          <label for="model-select">模型</label>
+          <select id="model-select"></select>
+          <p class="hint" id="model-meta"></p>
+        </div>
+
+        <div class="field">
+          <label class="checkbox">
+            <input type="checkbox" id="manual-toggle">
+            <span>手动输入（模型库查不到时使用）</span>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="params">参数量（B）</label>
+            <input type="number" id="params" min="0" step="0.1" placeholder="例如 7">
+          </div>
+          <div class="field">
+            <label for="quant">量化位数</label>
+            <select id="quant">
+              <option value="16">16 bit（FP16/BF16）</option>
+              <option value="8">8 bit</option>
+              <option value="4">4 bit</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <aside class="col-side">
+        <div class="field">
+          <span class="label">部署模式</span>
+          <label class="radio"><input type="radio" name="deploy" value="maas" checked><span>MaaS API</span></label>
+          <label class="radio"><input type="radio" name="deploy" value="private"><span>私有化</span></label>
+          <label class="radio"><input type="radio" name="deploy" value="cluster"><span>智算中心</span></label>
+          <label class="radio"><input type="radio" name="deploy" value="edge"><span>端侧</span></label>
+        </div>
+
+        <div class="field">
+          <label for="sensitivity">数据敏感度</label>
+          <select id="sensitivity">
+            <option value="public">公开/通用</option>
+            <option value="internal">内部业务数据</option>
+            <option value="core">核心/涉密</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="checkbox">
+            <input type="checkbox" id="agent-toggle">
+            <span>智能体（Agent）场景</span>
+          </label>
+        </div>
+      </aside>
+    </div>
+
+    <div class="scene-params" id="scene-params"></div>
+
+    <div class="actions">
+      <button type="button" id="btn-generate" class="btn-primary">生成评估报告</button>
+      <button type="button" id="btn-reset" class="btn-ghost">重置</button>
+    </div>
+    <p class="error" id="form-error" role="alert"></p>
+  </section>
+
+  <section class="card" id="report" aria-live="polite">
+    <h2>3. 评估报告</h2>
+    <div id="gaps"></div>
+    <div id="sec-resource"></div>
+    <div id="sec-data"></div>
+    <div id="sec-risk"></div>
+    <div id="sec-compliance"></div>
+
+    <div class="nonstandard" id="nonstandard-section">
+      <h3>非标准依据（经验值/自建，仅供参考）</h3>
+      <p class="hint">以下内容不使用 GB/Z 201—2026 条款，也不来自权威框架，仅作参考，不应作为验收依据。</p>
+      <div id="sec-score"></div>
+      <div id="sec-empirical"></div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="sources">
+      <strong>数据来源：</strong>
+      GB/Z 201—2026《人工智能 大模型选型和应用指南》附录 A（PDF 原文 p17–p19 核实）·
+      OWASP Top 10 for LLM Applications 2026 · OWASP Top 10 for Agentic Applications 2026 ·
+      《人工智能安全治理框架》2.0 · TC260《生成式人工智能服务安全基本要求》·
+      7 维评分权重取自本地《大模型选型实操指南》（自建，非标准原文）
+    </div>
+    <div class="footer-actions">
+      <span>数据核实日期：2026-09-09</span>
+      <button type="button" id="btn-print" class="btn-ghost">打印 / 导出 PDF</button>
+    </div>
+  </footer>
+
+</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
