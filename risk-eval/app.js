@@ -588,6 +588,13 @@ if (typeof document !== 'undefined') { (function () {
       ? '<div class="gaps"><strong>' + gaps.length + ' 项待填/待确认</strong><ul>' +
         gaps.map(function (g) { return '<li>' + esc(g) + '</li>'; }).join('') + '</ul></div>'
       : '';
+
+    /* 诊断日志：让用户在控制台一眼看到每个区块渲染了多少节点（防 print CSS 误伤其余区） */
+    console.info('[risk-eval] 报告已生成：resource=' + standard.length +
+      ' data=1 risk=' + (el('sec-risk').innerHTML.match(/risk-item/g) || []).length +
+      ' compliance=' + (el('sec-compliance').innerHTML.match(/risk-item/g) || []).length +
+      ' score=1 gaps=' + gaps.length +
+      ' empirical=' + empirical.length);
   }
 
   function bind() {

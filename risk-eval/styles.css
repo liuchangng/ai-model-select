@@ -234,11 +234,31 @@ table.data-table th { color: var(--text-2); font-weight: 500; }
 .site-footer { border-top: 1px solid var(--border); padding-top: var(--sp-2); color: var(--text-2); font-size: 13px; }
 .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: var(--sp-2); }
 
-/* 打印：隐藏控件、展开内容、避免跨页断裂 */
+/* 打印：隐藏控件、保留已选信息、避免跨页断裂
+   关键决策：未选中按钮隐，选中按钮降级为文字标签（避免「整 .segmented display:none」导致信息丢失）*/
 @media print {
   body { background: #FFFFFF; }
   .page { max-width: none; padding: 0; }
-  .segmented, .actions, .footer-actions, #btn-print { display: none; }
+
+  .segmented {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    overflow: visible;
+  }
+  .seg-btn { display: none; }
+  .seg-btn.is-active {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: transparent !important;
+    color: var(--text) !important;
+    font-weight: 500;
+  }
+  .seg-btn.is-active::before { content: '评估场景：'; color: var(--text-2); font-weight: 400; }
+
+  .actions, .footer-actions, #btn-print { display: none; }
   .card { border: 0; padding: 0 0 var(--sp-2); break-inside: avoid; }
   .risk-item, .report-block { break-inside: avoid; }
   .nonstandard { border: 1px solid var(--border); }
