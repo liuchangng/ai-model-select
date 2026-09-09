@@ -95,7 +95,9 @@ h3 { font-size: 15px; font-weight: 500; margin: 0 0 var(--sp-1); }
 .seg-btn:last-child { border-right: 0; }
 .seg-btn:hover { background: var(--surface); }
 .seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg-btn:active { background: var(--border); }
 .seg-btn.is-active { background: var(--accent); color: #FFFFFF; }
+.seg-btn.is-active:active { background: var(--accent-deep); }
 .seg-btn:disabled { background: var(--surface-sunken); color: var(--text-3); cursor: not-allowed; }
 
 /* 栅格：2fr / 1fr 非对称，避免三栏对称 */
@@ -138,12 +140,18 @@ input.is-invalid { border-color: var(--danger); background: var(--danger-soft); 
 }
 .btn-primary { background: var(--accent); color: #FFFFFF; }
 .btn-primary:hover { background: var(--accent-deep); }
+.btn-primary:active { background: var(--accent-deep); transform: translateY(1px); }
 .btn-primary:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 .btn-primary:disabled { background: var(--surface-sunken); color: var(--text-3); cursor: not-allowed; }
 .btn-ghost { background: var(--bg); color: var(--text); border-color: var(--border-strong); }
 .btn-ghost:hover { background: var(--surface); }
+.btn-ghost:active { background: var(--surface-sunken); transform: translateY(1px); }
 .btn-ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn-ghost:disabled { color: var(--text-3); background: var(--surface-sunken); cursor: not-allowed; }
+
+/* 滑块与勾选控件的按压反馈（四态之一） */
+.score-row input[type="range"]:active { cursor: grabbing; }
+.checkbox:active, .radio:active { color: var(--accent-deep); }
 
 /* 报告区 */
 .report-block { margin-bottom: var(--sp-3); }
